@@ -1,6 +1,14 @@
 name: Deploy (live)
 
 # Deploys main to https://screenshot-guru-11436.web.app after CI passes.
+#
+# Security: this workflow can read the Firebase deploy key, so it must only ever
+# build code that is already on main in THIS repository.
+# - workflow_run also fires for CI runs started by pull requests from forks, and a
+#   fork's branch can be called "main". The job therefore requires a CI run that was
+#   a push event, from this repository, on main.
+# - Manual runs (workflow_dispatch) need write access and are limited to main.
+# - Third-party actions are pinned to full commit SHAs (tags can be moved).
 on:
   workflow_run:
     workflows: [CI]
@@ -8,28 +16,37 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: deploy-live
   cancel-in-progress: false
 
 jobs:
   deploy:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
-      - uses: actions/setup-node@v4
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run build
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+      - uses: FirebaseExtended/action-hosting-deploy@500ac625ca2dd40cbd15f7659af953801858032a # v0.11.0
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SCREENSHOT_GURU_11436 }}
           projectId: screenshot-guru-11436
           channelId: live

@@ -1,6 +1,9 @@
 name: Deploy (PR preview)
 
-# Each pull request gets a temporary preview URL, posted as a PR comment.
+# Each pull request from this repository gets a temporary preview URL, posted as a
+# PR comment. Pull requests from forks never receive the deploy key (GitHub does not
+# pass secrets to fork PRs on the pull_request event), and the job is skipped for them.
+# Do NOT change this to pull_request_target: that would run fork code with secrets.
 on:
   pull_request:
 
@@ -9,22 +12,27 @@ permissions:
   contents: read
   pull-requests: write
 
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   preview:
-    # Forks do not get the secret; skip instead of failing.
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run build
       - id: deploy
-        uses: FirebaseExtended/action-hosting-deploy@v0
+        uses: FirebaseExtended/action-hosting-deploy@500ac625ca2dd40cbd15f7659af953801858032a # v0.11.0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SCREENSHOT_GURU_11436 }}
