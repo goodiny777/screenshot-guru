@@ -278,7 +278,9 @@ function DeckInspector({ slide }: { slide: number }) {
         </Field>
         <ul className="small muted" style={{ margin: 0, paddingLeft: 16 }}>
           {spec.rules.map((r) => <li key={r}>{r}</li>)}
+          {spec.verify && <li><b>Check:</b> {spec.verify}</li>}
         </ul>
+        {spec.source && <a className="small" href={spec.source} target="_blank" rel="noreferrer">Official spec (checked {spec.checked})</a>}
       </div>
       <div className="section">
         <h3>Background</h3>

@@ -123,6 +123,10 @@ contrast, missing translations, headline length).
 
 ## 7. Devices and templates
 
+Each device in `src/model/devices.ts` carries `source` (official page), `checked` (date read),
+optional `maxBytes` (export warns above it) and optional `verify` (anything not confirmed on the
+official page; shown in the editor as **Check:**). 25 device / asset types as of 2026-11-26.
+
 The device list and template list are generated into the skill
 (`skills/screenshot-guru/references/devices.md`, `templates.md`) by `npm run skill`.
 CI fails if they are stale.

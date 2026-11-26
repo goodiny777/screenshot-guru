@@ -41,6 +41,8 @@ for (const g of groups) {
 md += `## Store rules per device\n\n`;
 for (const d of DEVICES) {
   md += `### ${d.label} (\`${d.id}\`)\n\n${d.rules.map((r) => `- ${r}`).join("\n")}\n`;
+  if (d.verify) md += `- **Check:** ${d.verify}\n`;
+  if (d.source) md += `- Source: ${d.source} (read ${d.checked})\n`;
   if (d.safe) md += `- Safe area: ${d.safe.note}\n`;
   if (d.noText) md += `- **No added text allowed.** Use only \`screenshot\` in recipe slides.\n`;
   md += "\n";

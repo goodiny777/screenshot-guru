@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { getDevice, sizesFor } from "../model/devices";
-import { download, exportBundle, validate, type Format } from "../render/export";
+import { download, exportBundle, validate, type Format, type Oversize } from "../render/export";
 import { useStore } from "../store/store";
 import { Check, Dialog } from "./controls";
 
@@ -15,6 +15,7 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
   );
   const [progress, setProgress] = useState<{ done: number; total: number; file: string } | null>(null);
   const [result, setResult] = useState<string | null>(null);
+  const [oversize, setOversize] = useState<Oversize[]>([]);
   const warnings = useMemo(() => validate(project).filter((w) => devices.includes(w.device)), [project, devices]);
   const errors = warnings.filter((w) => w.level === "error").length;
 
@@ -23,10 +24,12 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
 
   const run = async () => {
     setResult(null);
+    setOversize([]);
     setProgress({ done: 0, total, file: "" });
     try {
       const r = await exportBundle(project, { devices, locales, format, sizes }, (done, t, file) => setProgress({ done, total: t, file }));
       download(r.zip, `${project.name.replace(/\W+/g, "-") || "app"}-store-assets.zip`);
+      setOversize(r.oversize);
       setResult(`Done: ${r.files} images.${r.missing.length ? ` ${r.missing.length} image(s) could not be loaded.` : ""}`);
     } catch (e) {
       setResult(`Export failed: ${(e as Error).message}`);
@@ -54,6 +57,15 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
         </div>
       )}
       {result && <div className="warn-item tip">{result}</div>}
+      {oversize.length > 0 && (
+        <div className="warn-item" role="alert">
+          <b>{oversize.length} file(s) are larger than the store allows.</b> Export these devices again as JPEG (smaller), or reduce grain and patterns:
+          <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+            {oversize.slice(0, 6).map((o) => <li key={o.path}>{o.path} — {(o.bytes / 1048576).toFixed(1)} MB (max {(o.max / 1048576).toFixed(0)} MB)</li>)}
+          </ul>
+          {format === "png" && <button style={{ marginTop: 8 }} onClick={() => setFormat("jpeg")}>Switch to JPEG</button>}
+        </div>
+      )}
       <div className="field">
         <h3>Devices and sizes</h3>
         {deckIds.map((id) => {

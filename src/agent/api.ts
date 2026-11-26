@@ -85,7 +85,7 @@ const api = {
   },
 
   listDevices() {
-    return DEVICES.map((d) => ({ id: d.id, label: d.label, store: d.store, canvas: d.canvas, rotatable: !!d.rotatable, sizes: d.sizes.map((s) => `${s.w}x${s.h}`), maxSlides: d.slides.max, rules: d.rules }));
+    return DEVICES.map((d) => ({ id: d.id, label: d.label, store: d.store, canvas: d.canvas, rotatable: !!d.rotatable, sizes: d.sizes.map((s) => `${s.w}x${s.h}`), maxSlides: d.slides.max, rules: d.rules, verify: d.verify, source: d.source, maxBytes: d.maxBytes }));
   },
 
   listTemplates() {
@@ -228,7 +228,7 @@ const api = {
     };
     const r = await exportBundle(p, job);
     if (o.download !== false) download(r.zip, `${p.name.replace(/\W+/g, "-")}-store-assets.zip`);
-    const out: { files: number; missing: string[]; base64?: string } = { files: r.files, missing: r.missing };
+    const out: { files: number; missing: string[]; oversize: typeof r.oversize; base64?: string } = { files: r.files, missing: r.missing, oversize: r.oversize };
     if (o.returnBase64) out.base64 = await blobToBase64(r.zip);
     return out;
   },

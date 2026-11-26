@@ -66,7 +66,8 @@ export type ExportJob = {
   format: Format;
 };
 
-export type ExportResult = { zip: Blob; files: number; missing: string[] };
+export type Oversize = { path: string; bytes: number; max: number; device: string };
+export type ExportResult = { zip: Blob; files: number; missing: string[]; oversize: Oversize[] };
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -87,17 +88,20 @@ export async function exportBundle(project: Project, job: ExportJob, onProgress?
         });
   }
   const files: Record<string, Uint8Array> = {};
+  const oversize: Oversize[] = [];
   for (let i = 0; i < plan.length; i++) {
     const p = plan[i];
     onProgress?.(i, plan.length, p.path);
     const canvas = renderSlide(project, p.deck, p.index, p.size, p.locale);
     files[p.path] = await encodeCanvas(canvas, job.format);
+    const max = getDevice(p.deck.device).maxBytes;
+    if (max && files[p.path].length > max) oversize.push({ path: p.path, bytes: files[p.path].length, max, device: p.deck.device });
     // let the UI breathe between big renders
     await new Promise((r) => setTimeout(r, 0));
   }
   onProgress?.(plan.length, plan.length, "zip");
   const zipped = zipSync(Object.fromEntries(Object.entries(files).map(([k, v]) => [k, [v, { level: 0 }]])) as never);
-  return { zip: new Blob([zipped as BlobPart], { type: "application/zip" }), files: plan.length, missing };
+  return { zip: new Blob([zipped as BlobPart], { type: "application/zip" }), files: plan.length, missing, oversize };
 }
 
 export function download(blob: Blob, name: string) {

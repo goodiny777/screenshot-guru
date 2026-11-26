@@ -25,7 +25,10 @@
     "event-details": 10,
     "play-promo": 10,
     "promo-vertical": 10,
-    "appstore-search": 1
+    "appstore-search": 1,
+    "appstore-header": 1,
+    "appstore-universal": 1,
+    "play-promo-square": 10
   },
   "type": "object",
   "required": [
@@ -88,7 +91,10 @@
           "event-details",
           "play-promo",
           "promo-vertical",
-          "appstore-search"
+          "appstore-search",
+          "appstore-header",
+          "appstore-universal",
+          "play-promo-square"
         ]
       },
       "additionalProperties": {

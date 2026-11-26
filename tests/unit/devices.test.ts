@@ -43,3 +43,25 @@ describe("device catalogue invariants", () => {
     expect(sizesFor("mac", "landscape")[0]).toMatchObject({ w: 2880, h: 1800 });
   });
 });
+
+describe("sources", () => {
+  it("every store slot cites an official Apple or Google page and a check date", () => {
+    for (const d of DEVICES.filter((x) => x.id !== "promo-vertical")) {
+      expect(d.source, d.id).toMatch(/^https:\/\/(developer\.apple\.com|support\.google\.com|developer\.android\.com)\//);
+      expect(d.checked, d.id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+  });
+  it("the generic vertical promo says it is not a store slot", () => {
+    expect(DEVICES.find((d) => d.id === "promo-vertical")!.verify).toMatch(/Not a store slot/);
+  });
+  it("Google Play slots carry the per-image size limit; Apple slots do not invent one", () => {
+    for (const d of DEVICES.filter((x) => x.store === "google")) expect(d.maxBytes, d.id).toBe(8 * 1024 * 1024);
+    for (const d of DEVICES.filter((x) => x.store === "apple")) expect(d.maxBytes, d.id).toBeUndefined();
+  });
+  it("App Store creative assets match Apple's creative asset spec", () => {
+    const get = (id: string) => DEVICES.find((d) => d.id === id)!.sizes.map((s) => `${s.w}x${s.h}`);
+    expect(get("appstore-header")).toEqual(["3840x1646"]);
+    expect(get("appstore-universal")).toEqual(["5244x2950"]);
+    expect(get("appstore-search")).toEqual(["3840x2560", "1920x1280"]);
+  });
+});

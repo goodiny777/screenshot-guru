@@ -157,7 +157,7 @@ export function App() {
           ) : <div className="warn-item tip">No problems found in any deck.</div>}
           <div className="field">
             <h3>{getDevice(project.activeDevice).label} rules</h3>
-            <ul className="small" style={{ margin: 0, paddingLeft: 18, lineHeight: 1.6 }}>{getDevice(project.activeDevice).rules.map((r) => <li key={r}>{r}</li>)}</ul>
+            <ul className="small" style={{ margin: 0, paddingLeft: 18, lineHeight: 1.6 }}>{getDevice(project.activeDevice).rules.map((r) => <li key={r}>{r}</li>)}{getDevice(project.activeDevice).verify && <li><b>Check:</b> {getDevice(project.activeDevice).verify}</li>}</ul>
           </div>
         </Dialog>
       )}
