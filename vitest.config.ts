@@ -6,5 +6,7 @@ export default defineConfig({
   test: {
     include: ["tests/unit/**/*.test.ts"],
     environment: "jsdom",
+    // idb-keyval opens IndexedDB at import time; jsdom has none.
+    setupFiles: ["fake-indexeddb/auto"],
   },
 });

@@ -34,6 +34,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "esbuild": "^0.28.2",
+    "fake-indexeddb": "^6.2.8",
     "jsdom": "^31.0.1",
     "oxlint": "^1.90.0",
     "pngjs": "^7.0.0",

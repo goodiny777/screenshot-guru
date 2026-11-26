@@ -43,7 +43,8 @@ export function loadAsset(id: string): Promise<Entry | null> {
   if (pending.has(id)) return pending.get(id)!;
   const p = (async () => {
     const blob = (await get(id, db)) as Blob | undefined;
-    if (!blob || blob.type.startsWith("font/") || blob.type.includes("font")) return null;
+    const type = blob?.type ?? "";
+    if (!blob || type.includes("font")) return null;
     try {
       const e = await decode(blob);
       cache.set(id, e);
