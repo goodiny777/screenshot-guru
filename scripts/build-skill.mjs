@@ -76,8 +76,11 @@ const walk = (dir) => {
 };
 walk(skillDir);
 fs.mkdirSync(path.join(root, "public"), { recursive: true });
-// fixed timestamps keep the zip byte-identical between builds (CI freshness check)
-const fixed = Object.fromEntries(Object.entries(files).map(([k, v]) => [k, [v, { mtime: new Date("2026-01-01T00:00:00Z") }]]));
+// Fixed timestamps keep the zip byte-identical between builds (CI freshness check).
+// Zip stores local date/time fields, so build the date from local fields too:
+// every time zone then writes 2026-01-01 00:00.
+const STAMP = new Date(2026, 0, 1, 0, 0, 0);
+const fixed = Object.fromEntries(Object.entries(files).map(([k, v]) => [k, [v, { mtime: STAMP }]]));
 fs.writeFileSync(path.join(root, "public", "screenshot-guru-skill.zip"), zipSync(fixed));
 fs.writeFileSync(path.join(root, "public", "skill-version.json"), JSON.stringify({ files: Object.keys(files), built: new Date().toISOString() }, null, 2));
 console.log(`skill: ${Object.keys(files).length} files packed into public/screenshot-guru-skill.zip`);
