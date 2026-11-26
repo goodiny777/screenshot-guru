@@ -62,6 +62,7 @@ flowchart LR
 | `scripts/check-skips.mjs` | CI gate: every skipped test names a `BUG-NNN` |
 | `scripts/serve-dist.mjs` | Serves `dist/` with `firebase.json` headers for production-like e2e |
 | `scripts/smoke.mjs` | Live smoke for a deployed URL |
+| `scripts/readme-images/capture.mjs` | Renders the README images through the real app (`npm run readme:images`); with `mock_screens.py` (synthetic demo app screens) and `compose.py` (layout) |
 
 ## 2. Rendering pipeline
 

@@ -16,7 +16,8 @@
     "fixtures": "node tests/fixtures/make-fixtures.mjs",
     "check:skips": "node scripts/check-skips.mjs",
     "check:skill": "node scripts/check-skill-fresh.mjs",
-    "check": "npm run lint && npm run typecheck && npm run check:skips && npm run check:skill && npm test"
+    "check": "npm run lint && npm run typecheck && npm run check:skips && npm run check:skill && npm test",
+    "readme:images": "python3 scripts/readme-images/mock_screens.py && npx vite build && (npx vite preview --port 4173 --strictPort & echo $! > .readme-build/preview.pid) && sleep 2 && node scripts/readme-images/capture.mjs; s=$?; kill $(cat .readme-build/preview.pid) 2>/dev/null; python3 scripts/readme-images/compose.py; exit $s"
   },
   "dependencies": {
     "@cfworker/json-schema": "^4.1.6",

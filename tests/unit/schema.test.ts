@@ -13,14 +13,26 @@ import { normalizeProject } from "../../src/store/io";
 const example = JSON.parse(fs.readFileSync("skills/screenshot-guru/assets/example-project.json", "utf8"));
 const PACK = "skills/screenshot-guru/scripts/pack_project.py";
 
+const PYTHON = (() => {
+  for (const cmd of ["python3", "python", "py", "python3.13", "python3.12", "python3.11"]) {
+    try {
+      const out = execFileSync(cmd, ["-c", "import sys; print(sys.version)"], { encoding: "utf8", stdio: "pipe" });
+      if (out.includes("3.")) return cmd;
+    } catch {
+      // try next
+    }
+  }
+  return "python3";
+})();
+
 function packErrors(project: unknown): string[] {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "pack-"));
   fs.writeFileSync(path.join(dir, "project.json"), JSON.stringify(project));
   try {
-    execFileSync("python3", [path.resolve(PACK), "project.json", "--out", "x.zip"], { cwd: dir, stdio: "pipe" });
+    execFileSync(PYTHON, [path.resolve(PACK), "project.json", "--out", "x.zip"], { cwd: dir, stdio: "pipe" });
     return [];
   } catch (e) {
-    return String((e as { stdout: Buffer }).stdout).split("\n").filter((l) => l.startsWith("error:"));
+    return String((e as { stdout: Buffer }).stdout).split(/\r?\n/).filter((l) => l.startsWith("error:"));
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

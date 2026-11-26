@@ -54,7 +54,9 @@ A skipped test must contain `blocked by BUG-NNN` (CI gate). Production headers a
 ## Specs
 
 Specs follow the spec-development skill: `docs/specs/SPEC-NNN-{slug}/` (epic, tasks, plan,
-verification-checklist). Hotfixes: `HF-NNN`. Bugs: `docs/bugs/BUG-NNN-*`.
+verification-checklist). Hotfixes: `HF-NNN`. Bugs: `docs/bugs/BUG-NNN-*`. All spec and planning
+registers (`docs/specs/`, `docs/bugs/`, `docs/future-work.md`) are
+local-only and ignored by git.
 
 ## Documentation impact map
 

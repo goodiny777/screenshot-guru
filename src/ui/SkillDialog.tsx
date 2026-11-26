@@ -4,11 +4,14 @@ import { CopyBlock, Dialog } from "./controls";
 type Agent = "claude-app" | "claude-code" | "antigravity" | "copilot" | "cursor";
 
 const REPO = "goodiny777/screenshot-guru";
+const LIVE = "https://screenshot-guru-11436.web.app";
+/** Install commands must work for anyone who copies them, so a local dev copy points to the live site. */
+const siteOrigin = () => (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname) ? LIVE : window.location.origin);
 const ZIP = "screenshot-guru-skill.zip";
 
 export function SkillDialog({ onClose }: { onClose: () => void }) {
   const [agent, setAgent] = useState<Agent>("claude-app");
-  const origin = window.location.origin;
+  const origin = siteOrigin();
   const zipUrl = `${origin}/${ZIP}`;
   const curl = (dir: string) => `mkdir -p ${dir} && curl -fsSL ${zipUrl} -o /tmp/${ZIP} && unzip -o /tmp/${ZIP} -d ${dir}`;
   const ps = (dir: string) => `New-Item -ItemType Directory -Force "${dir}" | Out-Null; Invoke-WebRequest ${zipUrl} -OutFile "$env:TEMP\\${ZIP}"; Expand-Archive -Force "$env:TEMP\\${ZIP}" "${dir}"`;
@@ -22,7 +25,7 @@ export function SkillDialog({ onClose }: { onClose: () => void }) {
   ];
 
   return (
-    <Dialog title="Add the screenshot-guru skill to your AI" onClose={onClose} footer={<a href={`/${ZIP}`} download><button className="primary">Download skill ZIP</button></a>}>
+    <Dialog title="Add the screenshot-guru skill to your AI" onClose={onClose} footer={<a href={`${origin}/${ZIP}`} download><button className="primary">Download skill ZIP</button></a>}>
       <p className="muted" style={{ margin: 0, lineHeight: 1.5 }}>
         The skill teaches your AI how to plan screenshot copy that follows App Store and Google Play rules, and how to hand the
         result to this site: either as a project file you drop here, or by driving this page directly when the AI can control a browser.

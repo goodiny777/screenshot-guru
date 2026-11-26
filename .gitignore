@@ -23,12 +23,31 @@ dist-ssr
 *.sln
 *.sw?
 
-# Firebase
+# Local specs and planning registers
+docs/specs/
+docs/bugs/
+docs/future-work.md
+docs/prod-readiness.md
+
+# Firebase generated files and directories
 .firebase/
-firebase-debug.log
+.firebaserc
+firebase-debug.log*
+*-debug.log*
+.runtimeconfig.json
+.github/workflows/firebase-hosting-*.yml
+
+# Local AI agent directories and lockfiles
+.agents/
+.claude/
+skills-lock.json
+
 # generated
 public/skill-version.json
 
 # test output
 playwright-report/
 test-results/
+
+# README image build
+.readme-build/

@@ -76,10 +76,15 @@ fs.writeFileSync(path.join(root, "public", "project.schema.json"), schemaJson);
 // Pack: the zip's top level must be the skill folder itself.
 const files = {};
 const walk = (dir) => {
-  for (const f of fs.readdirSync(dir)) {
+  for (const f of fs.readdirSync(dir).sort()) {
     const p = path.join(dir, f);
     if (fs.statSync(p).isDirectory()) walk(p);
-    else if (!f.startsWith(".")) files[path.relative(path.join(root, "skills"), p).split(path.sep).join("/")] = new Uint8Array(fs.readFileSync(p));
+    else if (!f.startsWith(".")) {
+      const raw = fs.readFileSync(p);
+      // Normalize CRLF -> LF on text files so Windows and Linux builds produce identical zip bytes
+      const buf = /\.(md|json|py|txt|yml|yaml)$/i.test(f) ? Buffer.from(raw.toString("utf8").replace(/\r\n/g, "\n"), "utf8") : raw;
+      files[path.relative(path.join(root, "skills"), p).split(path.sep).join("/")] = new Uint8Array(buf);
+    }
   }
 };
 walk(skillDir);
