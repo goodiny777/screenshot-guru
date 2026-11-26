@@ -1,0 +1,102 @@
+{
+  "schema": "screenshot-guru/1",
+  "name": "Habitly",
+  "locales": [
+    "en",
+    "de"
+  ],
+  "icon": "assets/icon.png",
+  "decks": {
+    "iphone": {
+      "template": "midnight-glow",
+      "slides": [
+        {
+          "layout": "hero",
+          "label": {
+            "en": "DAILY HABITS",
+            "de": "TÄGLICHE GEWOHNHEITEN"
+          },
+          "headline": {
+            "en": "Build habits\nthat **stick**",
+            "de": "Gewohnheiten,\ndie **bleiben**"
+          },
+          "screenshot": {
+            "en": "assets/home.png",
+            "de": "assets/home-de.png"
+          }
+        },
+        {
+          "layout": "top",
+          "label": "PROGRESS",
+          "headline": {
+            "en": "See your **streaks**\ngrow",
+            "de": "Sieh deine **Serien**\nwachsen"
+          },
+          "screenshot": "assets/stats.png"
+        },
+        {
+          "layout": "duo",
+          "label": "PLANNING",
+          "headline": {
+            "en": "Plan your **week**\nin a minute",
+            "de": "Plane deine **Woche**\nin einer Minute"
+          },
+          "screenshot": "assets/plan.png",
+          "screenshot2": "assets/home.png"
+        },
+        {
+          "layout": "claim",
+          "headline": {
+            "en": "Start **free**\ntoday",
+            "de": "Starte **gratis**\nheute"
+          },
+          "subline": {
+            "en": "No account needed",
+            "de": "Kein Konto nötig"
+          }
+        }
+      ]
+    },
+    "android-phone": {
+      "template": "vivid-gradient",
+      "slides": [
+        {
+          "headline": "Build habits\nthat **stick**",
+          "screenshot": "assets/home.png"
+        },
+        {
+          "headline": "See your **streaks** grow",
+          "screenshot": "assets/stats.png"
+        }
+      ]
+    },
+    "feature-graphic": {
+      "template": "midnight-glow",
+      "slides": [
+        {
+          "headline": "Habits that **stick**",
+          "screenshot": "assets/home.png"
+        }
+      ]
+    },
+    "wear-os": {
+      "template": "clean-light",
+      "slides": [
+        {
+          "screenshot": "assets/plan.png"
+        }
+      ]
+    },
+    "event-card": {
+      "template": "panorama",
+      "slides": [
+        {
+          "layout": "side",
+          "label": "THIS WEEK",
+          "headline": "30-day **streak** challenge",
+          "screenshot": "assets/stats.png"
+        }
+      ]
+    }
+  }
+}
