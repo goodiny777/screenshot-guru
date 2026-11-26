@@ -1,0 +1,34 @@
+name: Deploy (PR preview)
+
+# Each pull request gets a temporary preview URL, posted as a PR comment.
+on:
+  pull_request:
+
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  preview:
+    # Forks do not get the secret; skip instead of failing.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - id: deploy
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SCREENSHOT_GURU_11436 }}
+          projectId: screenshot-guru-11436
+          expires: 7d
+      - name: Preview smoke
+        run: node scripts/smoke.mjs "${{ steps.deploy.outputs.details_url }}"

@@ -20,7 +20,7 @@ and hands the result to the editor. Read this before writing specs or code.
 - Canvas 2D renderer (`src/render/`) shared by preview and export — keep them on one code path.
 - State: tiny store with undo/redo (`src/store/store.ts`); persistence in IndexedDB via `idb-keyval`.
 - Zip: `fflate`. PNG encode: `fast-png`. Skill build: `esbuild` (`scripts/build-skill.mjs`).
-- Tests: Vitest (unit) + Playwright (e2e, system Chrome).
+- Tests: Vitest (unit) + Playwright (e2e). CI: `.github/workflows/ci.yml`; deploy: `deploy.yml`, `preview.yml`.
 - Hosting: Firebase project `screenshot-guru-11436`, site https://screenshot-guru-11436.web.app
 
 ## Layout
@@ -43,7 +43,13 @@ npm run dev          # editor at http://localhost:5173
 npm run build        # skill refs + skill zip + typecheck + bundle (dist/)
 npm run skill        # regenerate skill references and zip only
 npm run deploy       # build + firebase deploy --only hosting (needs firebase login)
+npm run check        # lint + typecheck + skip gate + skill freshness + unit tests
+npm run test:e2e     # Playwright e2e (CHROME_PATH=/usr/bin/google-chrome on machines without Playwright Chromium)
 ```
+
+Tests: unit in `tests/unit` (pure logic), e2e in `tests/e2e` (real canvas, IndexedDB, fonts).
+A skipped test must contain `blocked by BUG-NNN` (CI gate). Production headers are tested via
+`scripts/serve-dist.mjs` on port 4174.
 
 ## Specs
 

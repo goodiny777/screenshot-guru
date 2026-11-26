@@ -6,18 +6,10 @@ import { addImageFile } from "../store/io";
 import { assetSize } from "../store/assets";
 import { deckSize, select, update, useStore } from "../store/store";
 import { newImage } from "../model/defaults";
+import { pickFile } from "./files";
 
 const ICON: Record<Layer["type"], string> = { text: "T", image: "▣", device: "▯", shape: "◆" };
 
-function pickFile(accept: string): Promise<File | null> {
-  return new Promise((resolve) => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = accept;
-    input.onchange = () => resolve(input.files?.[0] ?? null);
-    input.click();
-  });
-}
 
 export function LeftPanel() {
   const project = useStore((s) => s.project);
@@ -133,4 +125,3 @@ export function LeftPanel() {
   );
 }
 
-export { pickFile };

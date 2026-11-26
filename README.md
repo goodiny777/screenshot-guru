@@ -41,23 +41,26 @@ The skill hands work to the editor in two ways:
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-npm run build      # regenerates skill references + public/screenshot-guru-skill.zip, then builds
+npm run dev          # http://localhost:5173
+npm run check        # lint + typecheck + skip gate + skill freshness + unit tests
+npm run fixtures     # synthetic test fixtures (tests/fixtures/generated)
+npm run test:e2e     # Playwright; set CHROME_PATH to use an installed Chrome
+npm run build        # regenerates skill references + public/screenshot-guru-skill.zip, then builds
 ```
 
 `scripts/build-skill.mjs` generates `skills/screenshot-guru/references/devices.md` and `templates.md`
-from the app source, so the skill always matches the editor.
+from the app source, so the skill always matches the editor. CI fails if they are stale.
 
 ## Deploy (Firebase Hosting)
 
-```bash
-npm i -g firebase-tools
-firebase login
-firebase use <your-project-id>   # edit .firebaserc if the id is not "screenshot-guru"
-npm run deploy
-```
+- Every push to `main` runs CI, then `.github/workflows/deploy.yml` deploys to
+  https://screenshot-guru-11436.web.app and runs `scripts/smoke.mjs` against it.
+- Every pull request gets a 7-day preview URL (`preview.yml`).
+- Both need the GitHub secret `FIREBASE_SERVICE_ACCOUNT_SCREENSHOT_GURU_11436`.
 
-Static hosting only; there is no server code.
+Manual deploy: `npm i -g firebase-tools && firebase login && npm run deploy`.
+
+Static hosting only; there is no server code. User guide: [`docs/user-guide.md`](docs/user-guide.md).
 
 ## Project layout
 

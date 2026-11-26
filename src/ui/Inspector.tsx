@@ -8,7 +8,7 @@ import { addImageFile } from "../store/io";
 import { assetSize, putAsset, registerFont } from "../store/assets";
 import { deckSize, select, update, updateLayer, useStore } from "../store/store";
 import { BackgroundEditor, Check, Color, Field, Num, PaintEditor, Select, Slider } from "./controls";
-import { pickFile } from "./LeftPanel";
+import { pickFile } from "./files";
 import { markCustomFont } from "../model/fonts";
 
 const BLENDS: BlendMode[] = ["source-over", "multiply", "screen", "overlay", "soft-light", "hard-light", "color-dodge", "lighten", "darken", "difference"];

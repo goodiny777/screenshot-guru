@@ -271,7 +271,7 @@ function buildSlide(c: Ctx, layout: RecipeLayout, rs: RecipeSlide, i: number, la
       layers.push(headline(c, hl, { x: tx, y: H * 0.1, w: tw, h: H * 0.19 }, hSize));
       const dw = W * 0.62;
       layers.push(device(c, rs.screenshot2 ?? rs.screenshot, W * 0.38, H * 0.38, dw, 8));
-      layers.push(device(c, rs.screenshot, W * 0.0, H * 0.33, dw, -6));
+      layers.push(device(c, rs.screenshot, 0, H * 0.33, dw, -6));
       break;
     }
     case "claim":
