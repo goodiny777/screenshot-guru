@@ -5,6 +5,7 @@ import { DEVICE_MAP } from "../model/devices";
 import { emptyProject } from "../model/defaults";
 import { markCustomFont } from "../model/fonts";
 import { expandDeck } from "../model/templates";
+import { validateProject } from "../model/validateProject";
 import type { Project } from "../model/types";
 import { getAssetBlob, newAssetId, putAsset, registerFont } from "./assets";
 
@@ -26,6 +27,10 @@ function remap<T>(obj: T, map: Map<string, string>): T {
 
 /** Turn any accepted JSON (full or recipe) into a valid Project. */
 export function normalizeProject(raw: unknown, warnings: string[] = []): Project {
+  // Report schema problems, but stay lenient: open what can be opened (FR-18).
+  const issues = validateProject(raw);
+  for (const i of issues.slice(0, 8)) warnings.push(`Schema: ${i.path} ${i.message}`);
+  if (issues.length > 8) warnings.push(`Schema: ${issues.length - 8} more problem(s).`);
   const src = (raw ?? {}) as Partial<Project> & { decks?: Record<string, unknown> };
   const p = emptyProject();
   p.name = typeof src.name === "string" ? src.name : p.name;

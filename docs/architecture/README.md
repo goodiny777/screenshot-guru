@@ -1,6 +1,6 @@
 # Architecture
 
-**As of:** 2026-11-26 — prototype, test harness, and deploy pipeline.
+**As of:** 2026-11-26 — baseline tests, project schema, store size audit.
 
 screenshot-guru is a static single-page app. All editing, rendering and exporting happens in the
 user's browser. Firebase Hosting only serves files. The only outbound requests are to Google Fonts.
@@ -36,6 +36,8 @@ flowchart LR
 | `src/model/fonts.ts` | Curated Google Fonts list; loads font CSS on demand and waits for faces |
 | `src/model/defaults.ts` | Factories for layers, slides, decks; default frame and screen aspect per device |
 | `src/model/templates.ts` | 12 styles; recipe expansion (`buildDeck`, `expandDeck`); `restyleDeck`; `extractRecipe` |
+| `src/model/schema.ts` | JSON Schema for project.json, generated from the device and template lists (single file-format contract) |
+| `src/model/validateProject.ts` | Validates project JSON against the schema without `eval` (CSP-safe); returns JSON-Pointer paths |
 | `src/render/renderer.ts` | Draws a deck strip on Canvas 2D; the same code serves preview and export |
 | `src/render/frames.ts` | Generic vector device frames and their screen rectangles |
 | `src/render/text.ts` | Word wrap, `**highlight**` runs, auto-fit, outline |
@@ -85,6 +87,12 @@ Two file formats are accepted on import (`src/store/io.ts`):
 - **Full**: decks with slides and layers, as the editor saves them.
 
 Image paths inside a zip are replaced with fresh asset ids on import.
+
+**Schema.** `src/model/schema.ts` is the contract. `npm run skill` writes it to
+`public/project.schema.json` (served at `/project.schema.json`) and to
+`skills/screenshot-guru/assets/project.schema.json` (read by `pack_project.py`). The importer reports
+schema problems as warnings with JSON-Pointer paths but still opens what it can; the pack script
+treats them as errors. Both use the same paths, e.g. `/decks/iphone/slides/0/layout`.
 
 ## 4. Persistence
 

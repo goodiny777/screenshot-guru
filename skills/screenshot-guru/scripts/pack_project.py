@@ -17,19 +17,92 @@ import zipfile
 
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".avif")
 FONT_EXT = (".ttf", ".otf", ".woff", ".woff2")
-DEVICES = {
-    "iphone": 10, "ipad": 10, "iphone-duo-outer": 10, "iphone-duo-inner": 10, "apple-watch": 10,
-    "mac": 10, "apple-tv": 10, "vision-pro": 10, "android-phone": 8, "android-tablet-7": 8,
-    "android-tablet-10": 8, "chromebook": 8, "wear-os": 8, "android-tv": 8, "android-tv-banner": 1,
-    "android-xr": 8, "feature-graphic": 1, "event-card": 10, "event-details": 10, "play-promo": 10,
-    "promo-vertical": 10, "appstore-search": 1,
-}
-TEMPLATES = {
-    "clean-light", "midnight-glow", "vivid-gradient", "pastel-dream", "swiss-bold", "aurora-glass",
-    "neon-night", "paper-japandi", "candy-pop", "ocean-tilt", "panorama", "editorial-serif",
-}
-LAYOUTS = {"hero", "top", "duo", "claim", "span", "side", "full", "icon"}
-BANNED = re.compile(r"\b(#1|no\.?\s?1|best|top[- ]rated|download now|install now|free trial|sale|% off)\b", re.I)
+SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "project.schema.json")
+BANNED = re.compile(r"(#1\b|\bno\.?\s?1\b|\bbest\b|\btop[- ]rated\b|\bdownload now\b|\binstall now\b|\bfree trial\b|\bsale\b|% off)", re.I)
+TYPES = {"object": dict, "array": list, "string": str, "boolean": bool}
+
+
+def load_schema():
+    with open(SCHEMA_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _type_ok(value, t):
+    if t == "number":
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if t == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    return isinstance(value, TYPES[t])
+
+
+def validate(value, schema, root, path="", out=None):
+    """Small JSON Schema 2020-12 subset validator (the keywords project.schema.json uses).
+    Appends (json_pointer, message) for leaf failures. Paths match the web app's importer."""
+    if out is None:
+        out = []
+    if schema is True or schema is None:
+        return out
+    if schema is False:
+        out.append((path or "/", "is not allowed"))
+        return out
+    if "$ref" in schema:
+        node = root
+        for part in schema["$ref"].lstrip("#/").split("/"):
+            node = node[part]
+        validate(value, node, root, path, out)
+    if "type" in schema and not _type_ok(value, schema["type"]):
+        out.append((path or "/", f"must be {schema['type']}"))
+        return out
+    if "const" in schema and value != schema["const"]:
+        out.append((path or "/", f"must be {schema['const']!r}"))
+    if "enum" in schema and value not in schema["enum"]:
+        out.append((path or "/", f"must be one of: {', '.join(map(str, schema['enum']))}"))
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if "minimum" in schema and value < schema["minimum"]:
+            out.append((path or "/", f"must be >= {schema['minimum']}"))
+        if "maximum" in schema and value > schema["maximum"]:
+            out.append((path or "/", f"must be <= {schema['maximum']}"))
+        if "exclusiveMinimum" in schema and value <= schema["exclusiveMinimum"]:
+            out.append((path or "/", f"must be > {schema['exclusiveMinimum']}"))
+    if isinstance(value, str) and "minLength" in schema and len(value) < schema["minLength"]:
+        out.append((path or "/", f"must have at least {schema['minLength']} characters"))
+    if isinstance(value, list):
+        if "minItems" in schema and len(value) < schema["minItems"]:
+            out.append((path or "/", f"must have at least {schema['minItems']} items"))
+        if "items" in schema:
+            for i, item in enumerate(value):
+                validate(item, schema["items"], root, f"{path}/{i}", out)
+    if isinstance(value, dict):
+        for key in schema.get("required", []):
+            if key not in value:
+                out.append((path or "/", f"is missing required property '{key}'"))
+        if "minProperties" in schema and len(value) < schema["minProperties"]:
+            out.append((path or "/", f"must have at least {schema['minProperties']} properties"))
+        props = schema.get("properties", {})
+        for key, sub in value.items():
+            if "propertyNames" in schema:
+                names = schema["propertyNames"].get("enum")
+                if names is not None and key not in names:
+                    out.append((f"{path}/{key}", f"unknown key; must be one of: {', '.join(names)}"))
+                    continue
+            if key in props:
+                validate(sub, props[key], root, f"{path}/{key}", out)
+            elif "additionalProperties" in schema:
+                ap = schema["additionalProperties"]
+                if ap is False:
+                    out.append((f"{path}/{key}", "is not an allowed property"))
+                else:
+                    validate(sub, ap, root, f"{path}/{key}", out)
+    for sub in schema.get("allOf", []):
+        validate(value, sub, root, path, out)
+    if "anyOf" in schema:
+        if not any(not validate(value, sub, root, path, []) for sub in schema["anyOf"]):
+            out.append((path or "/", "does not match any allowed form"))
+    if "if" in schema:
+        branch = schema.get("then") if not validate(value, schema["if"], root, path, []) else schema.get("else")
+        if branch is not None:
+            validate(value, branch, root, path, out)
+    return out
 
 
 def main():
@@ -43,12 +116,12 @@ def main():
         project = json.load(f)
 
     errors, warnings = [], []
-    if project.get("schema") != "screenshot-guru/1":
-        errors.append('schema must be "screenshot-guru/1"')
+    schema = load_schema()
+    for pointer, message in validate(project, schema, schema):
+        errors.append(f"{pointer} {message}")
+    device_ids = set(schema["properties"]["decks"]["propertyNames"]["enum"])
     locales = project.get("locales") or ["en"]
     decks = project.get("decks") or {}
-    if not decks:
-        errors.append("decks is empty")
 
     files = {}  # zip path -> source path
 
@@ -95,16 +168,12 @@ def main():
         project["fonts"][fam] = resolve(path, f"fonts.{fam}")
 
     for dev, deck in decks.items():
-        if dev not in DEVICES:
-            errors.append(f"unknown device id '{dev}'")
-            continue
+        if dev not in device_ids:
+            continue  # already reported by the schema
         slides = deck.get("slides") or []
-        if not slides:
-            errors.append(f"{dev}: no slides")
-        if len(slides) > DEVICES[dev]:
-            errors.append(f"{dev}: {len(slides)} slides, the store allows {DEVICES[dev]}")
-        if "template" in deck and deck["template"] not in TEMPLATES:
-            errors.append(f"{dev}: unknown template '{deck['template']}'")
+        max_slides = schema.get("x-max-slides", {}).get(dev)
+        if max_slides is not None and len(slides) > max_slides:
+            errors.append(f"/decks/{dev}/slides {len(slides)} slides, the store allows {max_slides}")
         full = slides and all(isinstance(s, dict) and "layers" in s for s in slides)
         for i, s in enumerate(slides):
             where = f"{dev}.slides[{i}]"
@@ -115,8 +184,6 @@ def main():
                         if isinstance(layer.get("assets"), dict):
                             layer["assets"] = resolve_any(layer["assets"], f"{where}.{layer.get('id')}.assets")
                 continue
-            if s.get("layout") and s["layout"] not in LAYOUTS:
-                errors.append(f"{where}: unknown layout '{s['layout']}'")
             for key in ("screenshot", "screenshot2"):
                 if key in s:
                     s[key] = resolve_any(s[key], f"{where}.{key}")

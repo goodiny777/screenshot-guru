@@ -15,6 +15,14 @@ Image paths in `project.json` are relative to the zip root (for example `assets/
 On import the editor stores every image in the browser and replaces the paths with internal ids.
 PNG, JPEG, WebP, GIF and AVIF are accepted. Fonts (TTF, OTF, WOFF, WOFF2) can be included too.
 
+## Schema
+
+`assets/project.schema.json` in this skill (also at https://screenshot-guru-11436.web.app/project.schema.json)
+is the exact contract (JSON Schema 2020-12). `scripts/pack_project.py` validates against it and
+prints problems as JSON paths, for example `/decks/iphone/slides/0/layout must be one of: hero, …`.
+Fix every `error:` line before handing the zip to the user. `x-max-slides` in the schema lists the
+store's slide limit per device.
+
 ## Recipe format (write this)
 
 You describe the copy and screenshots per slide; the chosen template does the layout.

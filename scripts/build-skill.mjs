@@ -12,7 +12,7 @@ const tmp = path.join(root, "node_modules", ".cache", "skill-gen.mjs");
 
 await build({
   stdin: {
-    contents: `export { DEVICES } from "./src/model/devices.ts"; export { STYLES } from "./src/model/templates.ts";`,
+    contents: `export { DEVICES } from "./src/model/devices.ts"; export { STYLES } from "./src/model/templates.ts"; export { projectSchema } from "./src/model/schema.ts";`,
     resolveDir: root,
     loader: "ts",
   },
@@ -22,7 +22,7 @@ await build({
   outfile: tmp,
   logLevel: "error",
 });
-const { DEVICES, STYLES } = await import(pathToFileURL(tmp).href + `?t=${Date.now()}`);
+const { DEVICES, STYLES, projectSchema } = await import(pathToFileURL(tmp).href + `?t=${Date.now()}`);
 
 const groups = [...new Set(DEVICES.map((d) => d.group))];
 let md = `# Devices and store sizes
@@ -64,6 +64,12 @@ tm += `
 - Override colours with \`style\`: \`{ "accent": "#ff3b6b", "textColor": "#111", "frameColor": "#f5f5f7", "font": "Poppins", "background": { ... } }\`.
 `;
 fs.writeFileSync(path.join(skillDir, "references", "templates.md"), tm);
+
+// The project schema: one copy for the skill's pack script, one served by the site.
+const schemaJson = JSON.stringify(projectSchema(), null, 2) + "\n";
+fs.writeFileSync(path.join(skillDir, "assets", "project.schema.json"), schemaJson);
+fs.mkdirSync(path.join(root, "public"), { recursive: true });
+fs.writeFileSync(path.join(root, "public", "project.schema.json"), schemaJson);
 
 // Pack: the zip's top level must be the skill folder itself.
 const files = {};

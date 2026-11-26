@@ -47,3 +47,13 @@ test("skill zip is served with the skill folder at the top", async ({ request })
   expect(body.subarray(0, 2).toString()).toBe("PK");
   expect(body.includes(Buffer.from("screenshot-guru/SKILL.md"))).toBe(true);
 });
+
+test("project schema is served and packed into the skill", async ({ request }) => {
+  const res = await request.get(PROD_LIKE + "/project.schema.json");
+  expect(res.status()).toBe(200);
+  const schema = await res.json();
+  expect(schema.$id).toBe("https://screenshot-guru-11436.web.app/project.schema.json");
+  expect(schema.properties.decks.propertyNames.enum).toContain("wear-os");
+  const zip = await (await request.get(PROD_LIKE + "/screenshot-guru-skill.zip")).body();
+  expect(zip.includes(Buffer.from("screenshot-guru/assets/project.schema.json"))).toBe(true);
+});

@@ -63,6 +63,7 @@ App Store and Google Play rules and ASO practice. The user then fine-tunes and e
 - `references/browser-api.md` — `window.screenshotGuru` methods for browser-capable agents.
 - `scripts/pack_project.py` — validates project.json and builds the zip (Python 3, standard library only).
 - `assets/example-project.json` — a complete example to copy from.
+- `assets/project.schema.json` — the JSON Schema the pack script and the website validate against.
 
 If Python is not available, build the zip with any zip tool: `project.json` at the root and every
 image under `assets/`, with paths in the JSON matching the paths in the zip.

@@ -19,6 +19,7 @@
     "check": "npm run lint && npm run typecheck && npm run check:skips && npm run check:skill && npm test"
   },
   "dependencies": {
+    "@cfworker/json-schema": "^4.1.6",
     "fast-png": "^8.0.0",
     "fflate": "^0.8.3",
     "idb-keyval": "^6.3.0",
