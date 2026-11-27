@@ -70,7 +70,7 @@ export function drawLayer(ctx: CanvasRenderingContext2D, l: Layer, o: RenderOpti
   switch (l.type) {
     case "text":
       setShadow();
-      drawText(ctx, l, localizedText(l.text, o.locale, o.fallbackLocale));
+      drawText(ctx, l, localizedText(l.text, o.locale, o.fallbackLocale), o.locale);
       break;
     case "shape":
       setShadow();
