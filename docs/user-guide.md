@@ -70,7 +70,8 @@ With a layer selected:
 
 Add languages with **Languages…**. Edit each language by switching the language menu. If a text or
 screenshot has no translation, the base language is used. Arabic, Hebrew, Persian and Urdu text
-fields type right-to-left.
+fields type right-to-left, and the slides draw this text right-to-left. Names in Latin letters and
+numbers keep their own order.
 
 ## 7. Templates
 

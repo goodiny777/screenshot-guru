@@ -14,6 +14,65 @@ export function fontString(l: Pick<TextLayer, "italic" | "weight" | "font">, siz
   return `${l.italic ? "italic " : ""}${l.weight} ${size}px "${l.font}", system-ui, sans-serif`;
 }
 
+// ---------------------------------------------------------------------------
+// Right-to-left lines. Words are drawn one by one so each can be highlighted,
+// which means the canvas cannot order them for us: we put the runs of a line in
+// visual order here. This covers what store copy needs (Hebrew or Arabic with
+// Latin names, numbers and punctuation), not the whole Unicode bidi algorithm.
+// ---------------------------------------------------------------------------
+
+// Hebrew and Arabic, including their presentation forms.
+const RTL_CHARS = /[\p{Script=Hebrew}\p{Script=Arabic}]/u;
+const LETTER = /\p{L}/u;
+const RTL_LOCALE = /^(ar|fa|he|iw|ur)([-_]|$)/i;
+
+/** True when a text block should be laid out right-to-left. */
+export function isRtlText(text: string, locale = "") {
+  if (!RTL_CHARS.test(text)) return false;
+  if (RTL_LOCALE.test(locale)) return true;
+  const first = LETTER.exec(text)?.[0] ?? "";
+  return RTL_CHARS.test(first);
+}
+
+export type VisualRun = Run & { dir: "ltr" | "rtl" };
+type Kind = "ltr" | "rtl" | "number" | "neutral";
+
+function kindOf(text: string): Kind {
+  if (RTL_CHARS.test(text)) return "rtl";
+  if (LETTER.test(text)) return "ltr";
+  return /\p{N}/u.test(text) ? "number" : "neutral";
+}
+
+/** Cut punctuation off the edges of a Latin word, so it can follow the right-to-left line. */
+function splitEdges(run: Run): Run[] {
+  if (kindOf(run.text) !== "ltr") return [run];
+  const [, head, core, tail] = /^([^\p{L}\p{N}]*)(.*?)([^\p{L}\p{N}%+]*)$/su.exec(run.text)!;
+  return [head, core, tail].filter(Boolean).map((text) => ({ text, hl: run.hl }));
+}
+
+/**
+ * Runs of a right-to-left line, in the order to draw them from left to right.
+ * Latin words (with the spaces and numbers between or after them) keep their own order.
+ */
+export function visualRuns(runs: Run[]): VisualRun[] {
+  const parts = runs.flatMap(splitEdges);
+  const kinds = parts.map((r) => kindOf(r.text));
+  const units: VisualRun[][] = [];
+  for (let i = 0; i < parts.length; i++) {
+    if (kinds[i] !== "ltr") {
+      units.push([{ ...parts[i], dir: "rtl" }]);
+      continue;
+    }
+    let end = i;
+    for (let j = i + 1; j < parts.length && kinds[j] !== "rtl"; j++) {
+      if (kinds[j] === "ltr" || kinds[j] === "number") end = j;
+    }
+    units.push(parts.slice(i, end + 1).map((r) => ({ ...r, dir: "ltr" as const })));
+    i = end;
+  }
+  return units.reverse().flat();
+}
+
 function setSpacing(ctx: CanvasRenderingContext2D, px: number) {
   if ("letterSpacing" in ctx) (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${px}px`;
 }
@@ -73,7 +132,7 @@ export function fittedSize(ctx: CanvasRenderingContext2D, l: TextLayer, text: st
   return size;
 }
 
-export function drawText(ctx: CanvasRenderingContext2D, l: TextLayer, text: string) {
+export function drawText(ctx: CanvasRenderingContext2D, l: TextLayer, text: string, locale = "") {
   const size = fittedSize(ctx, l, text);
   const { lines, height, lineHeight } = measureText(ctx, l, text, size);
   const fill = paintStyle(ctx, l.fill, l.x, l.y, l.w, l.h);
@@ -85,8 +144,10 @@ export function drawText(ctx: CanvasRenderingContext2D, l: TextLayer, text: stri
   ctx.textBaseline = "alphabetic";
   ctx.textAlign = "left";
   const ascent = size * 0.8;
+  const rtl = isRtlText(text, locale);
 
   for (const line of lines) {
+    const runs: (Run & { dir?: "ltr" | "rtl" })[] = rtl ? visualRuns(line.runs) : line.runs;
     let x = l.x;
     if (l.align === "center") x += (l.w - line.width) / 2;
     else if (l.align === "right") x += l.w - line.width;
@@ -97,7 +158,7 @@ export function drawText(ctx: CanvasRenderingContext2D, l: TextLayer, text: stri
       let bx = x;
       const savedShadow = ctx.shadowColor;
       ctx.shadowColor = "transparent";
-      for (const r of line.runs) {
+      for (const r of runs) {
         const t = l.uppercase ? r.text.toUpperCase() : r.text;
         const rw = ctx.measureText(t).width;
         if (r.hl && !/^\s+$/.test(t)) {
@@ -112,9 +173,10 @@ export function drawText(ctx: CanvasRenderingContext2D, l: TextLayer, text: stri
       ctx.shadowColor = savedShadow;
     }
 
-    for (const r of line.runs) {
+    for (const r of runs) {
       const t = l.uppercase ? r.text.toUpperCase() : r.text;
       const rw = ctx.measureText(t).width;
+      if (r.dir) ctx.direction = r.dir;
       ctx.fillStyle = r.hl && style === "color" ? hl : fill;
       if (l.stroke && l.stroke.width > 0) {
         ctx.lineJoin = "round";
@@ -128,4 +190,5 @@ export function drawText(ctx: CanvasRenderingContext2D, l: TextLayer, text: stri
     y += lineHeight;
   }
   setSpacing(ctx, 0);
+  if (rtl) ctx.direction = "inherit";
 }
